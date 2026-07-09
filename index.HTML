@@ -1,0 +1,542 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sopa de Letras: El Sistema Turístico</title>
+    <style>
+        :root {
+            --primary: #0f172a;
+            --primary-light: #2563eb;
+            --accent-green: #22c55e;
+            --accent-red: #ef4444;
+            --bg-found: #fee2e2;
+            --bg-main: #f8fafc;
+            --surface: #ffffff;
+            --border: #cbd5e1;
+            --text-dark: #334155;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+            user-select: none;
+            -webkit-user-select: none;
+        }
+
+        body {
+            background-color: var(--bg-main);
+            color: var(--text-dark);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 15px;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 15px;
+            width: 100%;
+            max-width: 950px;
+        }
+
+        header h1 {
+            color: var(--primary-light);
+            font-size: 1.8rem;
+            font-weight: 800;
+            letter-spacing: -0.025em;
+        }
+
+        header p {
+            color: #64748b;
+            font-size: 0.95rem;
+            margin-top: 4px;
+        }
+
+        .dashboard {
+            width: 100%;
+            max-width: 950px;
+            background: var(--surface);
+            padding: 12px 20px;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+
+        .timer-box {
+            font-size: 1.4rem;
+            font-weight: 700;
+            color: var(--accent-red);
+            background: #fef2f2;
+            padding: 4px 14px;
+            border-radius: 8px;
+            border: 1px solid #fee2e2;
+            font-variant-numeric: tabular-nums;
+        }
+
+        .progress-box {
+            font-size: 1rem;
+            font-weight: 600;
+            color: #475569;
+        }
+
+        .btn {
+            background-color: var(--primary-light);
+            color: #ffffff;
+            border: none;
+            padding: 8px 16px;
+            font-size: 0.95rem;
+            font-weight: 600;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .btn:hover {
+            background-color: #1d4ed8;
+            transform: translateY(-1px);
+        }
+
+        .btn:active {
+            transform: translateY(0);
+        }
+
+        .main-layout {
+            width: 100%;
+            max-width: 950px;
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 15px;
+        }
+
+        @media (min-width: 768px) {
+            .main-layout {
+                grid-template-columns: 1fr 280px;
+            }
+        }
+
+        .board-wrapper {
+            background: var(--surface);
+            padding: 15px;
+            border-radius: 16px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            touch-action: none;
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(14, 1fr);
+            gap: 2px;
+            width: 100%;
+            max-width: 520px;
+            aspect-ratio: 1;
+            background-color: var(--border);
+            border: 3px solid var(--border);
+            border-radius: 8px;
+            overflow: hidden;
+        }
+
+        .cell {
+            background-color: #ffffff;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: clamp(0.75rem, 3vw, 1.2rem);
+            font-weight: 700;
+            color: #1e293b;
+            cursor: pointer;
+            aspect-ratio: 1;
+            transition: background-color 0.05s ease;
+        }
+
+        .cell.selecting {
+            background-color: var(--accent-green) !important;
+            color: #ffffff !important;
+        }
+
+        .cell.found {
+            background-color: var(--bg-found) !important;
+            color: var(--accent-red) !important;
+        }
+
+        .sidebar {
+            background: var(--surface);
+            padding: 20px;
+            border-radius: 16px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+            display: flex;
+            flex-direction: column;
+        }
+
+        .sidebar h2 {
+            font-size: 1.1rem;
+            color: #64748b;
+            margin-bottom: 12px;
+            padding-bottom: 6px;
+            border-bottom: 2px solid #f1f5f9;
+        }
+
+        .word-list {
+            list-style: none;
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 8px;
+        }
+
+        @media (min-width: 768px) {
+            .word-list {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .word-item {
+            font-size: 0.9rem;
+            font-weight: 600;
+            padding: 6px 10px;
+            background: #f1f5f9;
+            border-radius: 6px;
+            color: #475569;
+            transition: all 0.2s ease;
+        }
+
+        .word-item.found {
+            text-decoration: line-through;
+            color: var(--accent-red);
+            background-color: var(--bg-found);
+        }
+
+        /* Modales */
+        .modal-overlay {
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(15, 23, 42, 0.6);
+            backdrop-filter: blur(4px);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            padding: 20px;
+        }
+
+        .modal-box {
+            background: #ffffff;
+            padding: 30px;
+            border-radius: 16px;
+            max-width: 420px;
+            width: 100%;
+            text-align: center;
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+            animation: scaleUp 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+
+        @keyframes scaleUp {
+            from { transform: scale(0.9); opacity: 0; }
+            to { transform: scale(1); opacity: 1; }
+        }
+
+        .modal-box h2 {
+            font-size: 1.6rem;
+            margin-bottom: 10px;
+        }
+
+        .modal-box p {
+            color: #64748b;
+            margin-bottom: 20px;
+            line-height: 1.5;
+        }
+
+        .win h2 { color: var(--accent-green); }
+        .lose h2 { color: var(--accent-red); }
+    </style>
+</head>
+<body>
+
+    <header>
+        <h1>Sopa de Letras Interactiva</h1>
+        <p>Materia: El Sistema Turístico (Nivel Intermedio)</p>
+    </header>
+
+    <div class="dashboard">
+        <button class="btn" onclick="setupGame()">Reiniciar Juego</button>
+        <div class="timer-box" id="clock">05:00</div>
+        <div class="progress-box" id="progress">Encontradas: 0/10</div>
+    </div>
+
+    <div class="main-layout">
+        <div class="board-wrapper">
+            <div class="grid" id="boardGrid"></div>
+        </div>
+        <div class="sidebar">
+            <h2>Palabras a buscar:</h2>
+            <ul class="word-list" id="targetWords"></ul>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="endModal">
+        <div class="modal-box" id="modalContainer">
+            <h2 id="modalTitle">Título</h2>
+            <p id="modalDesc">Descripción del resultado de la partida.</p>
+            <button class="btn" onclick="closeModal()">Volver a Jugar</button>
+        </div>
+    </div>
+
+    <script>
+        const WORDS = ["TURISTA", "DESTINO", "TRANSPORTE", "ALOJAMIENTO", "ATRACTIVO", "INFRAESTRUCTURA", "AGENCIA", "SERVICIOS", "DEMANDA", "OFERTA"];
+        const SIZE = 14;
+        
+        let grid = [];
+        let discoveredWords = [];
+        let countdownSecs = 300;
+        let timerTicker = null;
+        
+        let dragActive = false;
+        let originCoord = null;
+        let currentSelection = [];
+
+        function setupGame() {
+            clearInterval(timerTicker);
+            countdownSecs = 300;
+            discoveredWords = [];
+            grid = Array(SIZE).fill(null).map(() => Array(SIZE).fill(''));
+            
+            refreshClock();
+            timerTicker = setInterval(tick, 1000);
+            
+            placeAllWords();
+            fillBlanks();
+            buildUI();
+            updateStats();
+        }
+
+        function placeAllWords() {
+            // Nivel Intermedio: Horizontal, Vertical, Diagonal abajo-derecha
+            const vectors = [
+                {r: 0, c: 1},  // H
+                {r: 1, c: 0},  // V
+                {r: 1, c: 1}   // D
+            ];
+
+            for (let word of WORDS) {
+                let assigned = false;
+                let loops = 0;
+
+                while (!assigned && loops < 150) {
+                    const vec = vectors[Math.floor(Math.random() * vectors.length)];
+                    const startR = Math.floor(Math.random() * SIZE);
+                    const startC = Math.floor(Math.random() * SIZE);
+
+                    if (verifyPlacement(word, startR, startC, vec)) {
+                        for (let i = 0; i < word.length; i++) {
+                            grid[startR + (vec.r * i)][startC + (vec.c * i)] = word[i];
+                        }
+                        assigned = true;
+                    }
+                    loops++;
+                }
+            }
+        }
+
+        function verifyPlacement(word, r, c, vec) {
+            if (r + vec.r * word.length > SIZE || c + vec.c * word.length > SIZE) return false;
+            
+            for (let i = 0; i < word.length; i++) {
+                const target = grid[r + (vec.r * i)][c + (vec.c * i)];
+                if (target !== '' && target !== word[i]) return false;
+            }
+            return true;
+        }
+
+        function fillBlanks() {
+            const alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+            for (let r = 0; r < SIZE; r++) {
+                for (let c = 0; c < SIZE; c++) {
+                    if (grid[r][c] === '') {
+                        grid[r][c] = alphabet[Math.floor(Math.random() * alphabet.length)];
+                    }
+                }
+            }
+        }
+
+        function buildUI() {
+            const board = document.getElementById('boardGrid');
+            board.innerHTML = '';
+            
+            for (let r = 0; r < SIZE; r++) {
+                for (let c = 0; c < SIZE; c++) {
+                    const cell = document.createElement('div');
+                    cell.classList.add('cell');
+                    cell.textContent = grid[r][c];
+                    cell.dataset.row = r;
+                    cell.dataset.col = c;
+
+                    // Ratón
+                    cell.addEventListener('mousedown', onDragStart);
+                    cell.addEventListener('mouseenter', onDragMove);
+
+                    // Touch Móviles
+                    cell.addEventListener('touchstart', onTouchStart, {passive: false});
+
+                    board.appendChild(cell);
+                }
+            }
+
+            // Captura de finalización global
+            window.addEventListener('mouseup', onDragEnd);
+            board.addEventListener('touchmove', onTouchMove, {passive: false});
+            board.addEventListener('touchend', onDragEnd);
+
+            // Renderizar Lista Lateral
+            const list = document.getElementById('targetWords');
+            list.innerHTML = '';
+            WORDS.forEach(w => {
+                const li = document.createElement('li');
+                li.classList.add('word-item');
+                li.id = `word-item-${w}`;
+                li.textContent = w;
+                list.appendChild(li);
+            });
+        }
+
+        function extractCoords(el) {
+            return { r: parseInt(el.dataset.row), c: parseInt(el.dataset.col) };
+        }
+
+        // --- Manejadores de Eventos ---
+        function onDragStart(e) {
+            dragActive = true;
+            originCoord = extractCoords(e.target);
+            mapSelection(originCoord, originCoord);
+        }
+
+        function onDragMove(e) {
+            if (!dragActive) return;
+            mapSelection(originCoord, extractCoords(e.target));
+        }
+
+        function onTouchStart(e) {
+            const node = document.elementFromPoint(e.touches[0].clientX, e.touches[0].clientY);
+            if (node && node.classList.contains('cell')) {
+                dragActive = true;
+                originCoord = extractCoords(node);
+                mapSelection(originCoord, originCoord);
+                e.preventDefault();
+            }
+        }
+
+        function onTouchMove(e) {
+            if (!dragActive) return;
+            const node = document.elementFromPoint(e.touches[0].clientX, e.touches[0].clientY);
+            if (node && node.classList.contains('cell')) {
+                mapSelection(originCoord, extractCoords(node));
+            }
+            e.preventDefault();
+        }
+
+        function mapSelection(start, end) {
+            document.querySelectorAll('.cell.selecting').forEach(el => el.classList.remove('selecting'));
+            currentSelection = [];
+
+            let deltaR = end.r - start.r;
+            let deltaC = end.c - start.c;
+            
+            let distance = Math.max(Math.abs(deltaR), Math.abs(deltaC));
+            if (distance === 0) distance = 1;
+
+            let stepR = deltaR === 0 ? 0 : deltaR / Math.abs(deltaR);
+            let stepC = deltaC === 0 ? 0 : deltaC / Math.abs(deltaC);
+
+            // Validar restricción del nivel intermedio (H, V, o diagonal perfecta)
+            if (deltaR !== 0 && deltaC !== 0 && Math.abs(deltaR) !== Math.abs(deltaC)) return;
+
+            for (let i = 0; i <= distance; i++) {
+                let currR = start.r + stepR * i;
+                let currC = start.c + stepC * i;
+                
+                if (currR >= 0 && currR < SIZE && currC >= 0 && currC < SIZE) {
+                    const domCell = document.querySelector(`[data-row='${currR}'][data-col='${currC}']`);
+                    if (domCell) {
+                        domCell.classList.add('selecting');
+                        currentSelection.push(domCell);
+                    }
+                }
+            }
+        }
+
+        function onDragEnd() {
+            if (!dragActive) return;
+            dragActive = false;
+
+            let builtWord = currentSelection.map(c => c.textContent).join('');
+            
+            if (WORDS.includes(builtWord) && !discoveredWords.includes(builtWord)) {
+                discoveredWords.push(builtWord);
+                currentSelection.forEach(c => {
+                    c.classList.remove('selecting');
+                    c.classList.add('found');
+                });
+                
+                const targetLi = document.getElementById(`word-item-${builtWord}`);
+                if (targetLi) targetLi.classList.add('found');
+                
+                updateStats();
+                evaluateGameStatus();
+            } else {
+                currentSelection.forEach(c => c.classList.remove('selecting'));
+            }
+            currentSelection = [];
+        }
+
+        // --- Gestión de Tiempos e Interfaz ---
+        function tick() {
+            if (countdownSecs <= 0) {
+                clearInterval(timerTicker);
+                showModal('lose', '¡Tiempo agotado!', 'El reloj llegó a cero. Inténtalo de nuevo para repasar los componentes esenciales de la actividad turística.');
+                return;
+            }
+            countdownSecs--;
+            refreshClock();
+        }
+
+        function refreshClock() {
+            let m = Math.floor(countdownSecs / 60);
+            let s = countdownSecs % 60;
+            document.getElementById('clock').textContent = `${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
+        }
+
+        function updateStats() {
+            document.getElementById('progress').textContent = `Encontradas: ${discoveredWords.length}/${WORDS.length}`;
+        }
+
+        function evaluateGameStatus() {
+            if (discoveredWords.length === WORDS.length) {
+                clearInterval(timerTicker);
+                showModal('win', '¡Felicidades!', 'Has dominado y localizado todos los elementos del Sistema Turístico antes del límite de tiempo.');
+            }
+        }
+
+        function showModal(type, title, message) {
+            const container = document.getElementById('modalContainer');
+            container.className = 'modal-box ' + type;
+            document.getElementById('modalTitle').textContent = title;
+            document.getElementById('modalDesc').textContent = message;
+            document.getElementById('endModal').style.display = 'flex';
+        }
+
+        function closeModal() {
+            document.getElementById('endModal').style.display = 'none';
+            setupGame();
+        }
+
+        window.onload = setupGame;
+    </script>
+</body>
+</html>
